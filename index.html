@@ -2,10 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>FLAMES Calculator</title>
+  <title>F-L-A-M-E-S (A Name Game Calculator)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
 
   <style>
     body {
@@ -15,26 +13,33 @@
       padding: 15px;
     }
 
+    /* Title */
     .header-title {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
       color: #e91e63;
-      text-align: center;
-      margin-bottom: 10px;
+      text-align: left;
+      margin-bottom: 8px;
     }
 
     .header-sub {
-      text-align: center;
+      text-align: left;
+      font-size: 15px;
       margin-bottom: 20px;
     }
 
+    .header-sub b {
+      color: #d81b60;
+    }
+
+    /* Main input card */
     .card {
       background: white;
       padding: 20px;
       border-radius: 12px;
-      max-width: 450px;
+      border: 1px solid #f5c6d6;
+      max-width: 500px;
       margin: auto;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
 
     input {
@@ -46,58 +51,76 @@
       font-size: 16px;
     }
 
+    /* Buttons */
     .btn-row {
-      margin-top: 15px;
+      margin-top: 18px;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 12px;
     }
 
     button {
-      width: 48%;
-      padding: 14px;
+      padding: 12px 20px;
       border: none;
       border-radius: 8px;
       background: #d81b60;
       color: white;
       font-size: 16px;
+      cursor: pointer;
     }
 
+    button:hover {
+      background: #b71550;
+    }
+
+    /* Results heading */
     h3 {
       margin-top: 30px;
       color: #444;
+      font-size: 22px;
+      border-bottom: 3px solid #add8e6;
+      width: 120px;
+      padding-bottom: 3px;
     }
 
+    /* Result card */
     .result-box {
-      background: white;
-      margin-top: 10px;
-      padding: 20px;
+      background: #fff;
       border-radius: 12px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-      text-align: center;
+      padding: 20px;
+      margin-top: 12px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #e0dcdc;
       display: none;
+      text-align: left;
     }
 
     .result-image {
       width: 150px;
+      display: block;
       margin-top: 10px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="header-title">
-    F-L-A-M-E-S (A Name Game Calculator)
-  </div>
+  <div class="header-title">F-L-A-M-E-S (A Name Game Calculator)</div>
 
   <p class="header-sub">
-    This online flames calculator is used to find compatibility between you and your partner.  
-    <b>This is just a fun</b> tool, please don't take it seriously.
+    This online flames calculator is used to find the compatibility between you and your partner.  
+    <b>This is just a fun</b> tool please don't take it seriously.
   </p>
 
   <div class="card">
-    <input id="name1" placeholder="Your Name">
-    <input id="name2" placeholder="Your Partner Name">
+    <label>Your Name</label>
+    <input id="name1" placeholder="Caleb">
+
+    <label>Your Partner Name</label>
+    <input id="name2" placeholder="Favourkkkkk">
 
     <div class="btn-row">
       <button onclick="calculate()">Calculate</button>
@@ -110,43 +133,69 @@
   <div id="result" class="result-box"></div>
 
   <script>
-    let pyReady = false;
-
-    async function loadPython() {
-      window.pyodide = await loadPyodide();
-      await pyodide.runPythonAsync(await (await fetch("flames.py")).text());
-      pyReady = true;
+    function cleanName(name) {
+      return name.replace(/\s+/g, "").toLowerCase().split("");
     }
-    loadPython();
 
-    async function calculate() {
-      if (!pyReady) {
-        alert("Loading Python. Please wait.");
+    function countUnmatched(a, b) {
+      let n1 = cleanName(a);
+      let n2 = cleanName(b);
+
+      for (let ch of [...n1]) {
+        let i1 = n1.indexOf(ch);
+        let i2 = n2.indexOf(ch);
+        if (i1 !== -1 && i2 !== -1) {
+          n1.splice(i1, 1);
+          n2.splice(i2, 1);
+        }
+      }
+      return n1.length + n2.length;
+    }
+
+    function flames(count) {
+      let list = ["F", "L", "A", "M", "E", "S"];
+
+      while (list.length > 1) {
+        let index = (count % list.length) - 1;
+
+        if (index >= 0) {
+          list = [...list.slice(index + 1), ...list.slice(0, index)];
+        } else {
+          list.pop();
+        }
+      }
+      return list[0];
+    }
+
+    function meaning(letter) {
+      return {
+        F: { label: "Friends", image: "friends" },
+        L: { label: "Lovers", image: "lovers" },
+        A: { label: "Affection", image: "affection" },
+        M: { label: "Marriage", image: "marriage" },
+        E: { label: "Enemies", image: "enemies" },
+        S: { label: "Siblings", image: "siblings" }
+      }[letter];
+    }
+
+    function calculate() {
+      let a = document.getElementById("name1").value.trim();
+      let b = document.getElementById("name2").value.trim();
+
+      if (!a || !b) {
+        alert("Please enter both names");
         return;
       }
 
-      let a = document.getElementById("name1").value;
-      let b = document.getElementById("name2").value;
-
-      if (a === "" || b === "") {
-        alert("Enter both names");
-        return;
-      }
-
-      let output = await pyodide.runPythonAsync(`
-from flames import run_flames
-run_flames("${a}", "${b}")
-      `);
-
-      let parts = output.split("|");
-      let label = parts[0];
-      let image = parts[1];
+      let count = countUnmatched(a, b);
+      let letter = flames(count);
+      let result = meaning(letter);
 
       document.getElementById("result").style.display = "block";
       document.getElementById("result").innerHTML = `
         <p>The Relationship between <b>${a}</b> and <b>${b}</b> is</p>
-        <img class="result-image" src="images/${image}.png">
-        <p><b>${label}</b></p>
+        <img class="result-image" src="images/${result.image}.png">
+        <p><b>${result.label}</b></p>
         <p>This is Just for F U N ! ! ! Have a nice time..</p>
       `;
     }
